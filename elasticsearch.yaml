@@ -8,7 +8,7 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 2Gi
+      storage: 1Gi
   storageClassName: standard
 ---
 apiVersion: apps/v1
@@ -40,10 +40,10 @@ spec:
             - containerPort: 9200
           resources:
             limits:
-              memory: "2Gi"
+              memory: "1Gi"
               cpu: "1"
             requests:
-              memory: "1Gi"
+              memory: "500m"
               cpu: "500m"
           volumeMounts:
             - mountPath: /usr/share/elasticsearch/data
