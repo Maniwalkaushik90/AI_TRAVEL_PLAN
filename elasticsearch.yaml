@@ -1,17 +1,3 @@
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: standard-expandable
-provisioner: kubernetes.io/gce-pd   # For GCP; adjust if on AWS, Azure, etc.
-allowVolumeExpansion: true
-reclaimPolicy: Retain
-volumeBindingMode: WaitForFirstConsumer
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: logging
----
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -22,16 +8,14 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: "2Gi"   # You can now increase this anytime
-  storageClassName: standard-expandable
+      storage: 2Gi
+  storageClassName: standard
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: elasticsearch
   namespace: logging
-  labels:
-    app: elasticsearch
 spec:
   replicas: 1
   selector:
@@ -43,44 +27,41 @@ spec:
         app: elasticsearch
     spec:
       containers:
-      - name: elasticsearch
-        image: docker.elastic.co/elasticsearch/elasticsearch:7.17.0
-        env:
-        - name: discovery.type
-          value: single-node
-        - name: ES_JAVA_OPTS
-          value: "-Xms512m -Xmx512m"
-        - name: xpack.security.enabled
-          value: "false"
-        ports:
-        - containerPort: 9200
-        resources:
-          requests:
-            cpu: "500m"
-            memory: "1Gi"
-          limits:
-            cpu: "1"
-            memory: "2Gi"
-        volumeMounts:
-        - name: elasticsearch-storage
-          mountPath: /usr/share/elasticsearch/data
+        - name: elasticsearch
+          image: docker.elastic.co/elasticsearch/elasticsearch:7.17.0
+          env:
+            - name: discovery.type
+              value: single-node
+            - name: ES_JAVA_OPTS
+              value: "-Xms512m -Xmx512m"
+            - name: xpack.security.enabled
+              value: "false"
+          ports:
+            - containerPort: 9200
+          resources:
+            limits:
+              memory: "2Gi"
+              cpu: "1"
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+          volumeMounts:
+            - mountPath: /usr/share/elasticsearch/data
+              name: elasticsearch-storage
       volumes:
-      - name: elasticsearch-storage
-        persistentVolumeClaim:
-          claimName: elasticsearch-pvc
+        - name: elasticsearch-storage
+          persistentVolumeClaim:
+            claimName: elasticsearch-pvc
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: elasticsearch
   namespace: logging
-  labels:
-    app: elasticsearch
 spec:
-  type: ClusterIP
   selector:
     app: elasticsearch
   ports:
-  - protocol: TCP
-    port: 9200
-    targetPort: 9200
+    - protocol: TCP
+      port: 9200
+      targetPort: 9200
