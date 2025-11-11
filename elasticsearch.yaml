@@ -22,7 +22,7 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 10Gi   # You can now increase this anytime
+      storage: "2Gi"   # You can now increase this anytime
   storageClassName: standard-expandable
 ---
 apiVersion: apps/v1
